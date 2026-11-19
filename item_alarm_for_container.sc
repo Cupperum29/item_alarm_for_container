@@ -12,7 +12,8 @@
 //                      /<app> cycle <tick>
 //                 获取当前周期：
 //                      /<app> cycle
-//
+//           停止：停止所有检测
+
 
 
 __config() ->
@@ -37,6 +38,8 @@ __config() ->
                     //小于等于
                     'capacity <pos> <item> less <capacity>' -> 'less'
                     //无需写<=和>=的指令，因为在整数中，>=1和>0等效，<=100和<101等效
+                  //停止检测
+
                   },
     'arguments' ->
           {
@@ -52,7 +55,8 @@ __config() ->
                                    [
                                     'hopper_minecart',
                                     'minecart',
-                                    'shears'
+                                    'shears',
+                                    'shulker_box'
                                    ]
                       },
             'capacity' -> {
@@ -72,7 +76,7 @@ __config() ->
   };
 
 //默认变量
-cycle = 1;//默认的检测周期，所有模式的检测的周期共用一个周期
+global_cycle = 1;//默认的检测周期，所有模式的检测的周期共用一个周期
 
 
 //自定义函数
@@ -87,7 +91,7 @@ cycle = 1;//默认的检测周期，所有模式的检测的周期共用一个�
       inventory_size(pos),//限制循环次数防止死循环
         (
             stack = inventory_get(pos, slot);
-            if(stack != null && stack:0 == item, total += stack:1);
+            if(stack != null && stack:0 == item:0, total += stack:1);
             slot += 1;
         )
     );
@@ -97,17 +101,17 @@ cycle = 1;//默认的检测周期，所有模式的检测的周期共用一个�
   //每tick检测容器是否有黑名单物品并打印
   is_blacklist(pos, item) ->
   (
-    slot = inventory_find(pos, item);
+    slot = inventory_find(pos, item:0);
     if 
     (
-      slot != null,
+       slot != null,
       (
-        print(player(),format('w 在第'+tick_time()+'游戏刻,位于'+ pos +'的容器中有'+ item_display_name(inventory_get(pos, slot):0) + '。' ));
+        print(player(),format('#fff98b 在第'+tick_time()+'游戏刻,位于'+ pos +'的容器中有'+ item_display_name(inventory_get(pos, slot):0) + '。' ));
         print(player(),format('w 容器进脏警报器（黑名单）已停止。'));
         return();
       )
     );
-    schedule(cycle, 'is_blacklist', pos, item);
+    schedule(global_cycle, 'is_blacklist', pos, item);
   );
 
   //每tick检测容器是否有非白名单物品并打印
@@ -122,14 +126,14 @@ cycle = 1;//默认的检测周期，所有模式的检测的周期共用一个�
       (
         inventory_get(pos, slot) != null && inventory_get(pos, slot) != item,  //判断是否为非空非白名单物品
         (
-          print(player(),format('w 在第'+tick_time()+'游戏刻,位于'+ pos +'的容器中有非'+ item_display_name(inventory_get(pos, slot):0) + '的物品。'));
+          print(player(),format('#fff98b 在第'+tick_time()+'游戏刻,位于'+ pos +'的容器中进入'+ item_display_name(inventory_get(pos, slot):0) + '！'));
           print(player(),format('w 容器进脏警报器（白名单）已停止。'));
           return();
         )
       );
       slot += 1;
     );
-    schedule(cycle, 'is_whitelist', pos, item);
+    schedule(global_cycle, 'is_whitelist', pos, item);
   );
 
   //每tick检测容器的某个物品总数是否等于某个数
@@ -140,12 +144,12 @@ cycle = 1;//默认的检测周期，所有模式的检测的周期共用一个�
     (
       total == capacity,
       (
-        print(player(),format('w 在第'+tick_time()+'游戏刻,位于'+ pos +'的容器中的'+ item_display_name(item) +'数量达到'+ capacity + '。'));
+        print(player(),format('#fff98b 在第'+tick_time()+'游戏刻,位于'+ pos +'的容器中的'+ item_display_name(item) +'数量达到'+ capacity + '！'));
         print(player(),format('w 容器进脏警报器（等于）已停止。'));
         return();
       )
     );
-    schedule(cycle, 'is_equal', pos, item, capacity);
+    schedule(global_cycle, 'is_equal', pos, item, capacity);
   );
 
   //每tick检测容器的某个物品总数是否不等于某个数
@@ -156,12 +160,12 @@ cycle = 1;//默认的检测周期，所有模式的检测的周期共用一个�
     (
       total != capacity,
       (
-        print(player(),format('w 在第'+tick_time()+'游戏刻,位于'+ pos +'的容器中的'+ item_display_name(item) +'数量不再是'+ capacity + '。'));
+        print(player(),format('#fff98b 在第'+tick_time()+'游戏刻,位于'+ pos +'的容器中的'+ item_display_name(item) +'数量不再是'+ capacity + '！'));
         print(player(),format('w 容器进脏警报器（不等于）已停止。'));
         return();
       )
     );
-    schedule(cycle, 'is_not_equal', pos, item, capacity);
+    schedule(global_cycle, 'is_not_equal', pos, item, capacity);
   );
 
   //每tick检测容器的某个物品总数是否大于某个数
@@ -172,12 +176,12 @@ cycle = 1;//默认的检测周期，所有模式的检测的周期共用一个�
     (
       total > capacity,
       (
-        print(player(),format('w 在第'+tick_time()+'游戏刻,位于'+ pos +'的容器中的'+ item_display_name(item) +'数量超过'+ capacity + '。'));
+        print(player(),format('#fff98b 在第'+tick_time()+'游戏刻,位于'+ pos +'的容器中的'+ item_display_name(item) +'数量超过'+ capacity + '！'));
         print(player(),format('w 容器进脏警报器（大于）已停止。'));
         return();
       )
     );
-    schedule(cycle, 'is_greater', pos, item, capacity);
+    schedule(global_cycle, 'is_greater', pos, item, capacity);
   );
 
   //每tick检测容器的某个物品总数是否小于某个数
@@ -188,12 +192,12 @@ cycle = 1;//默认的检测周期，所有模式的检测的周期共用一个�
     (
       total < capacity,
       (
-        print(player(),format('w 在第'+tick_time()+'游戏刻,位于'+ pos +'的容器中的'+ item_display_name(item) +'数量不足'+ capacity + '。'));
+        print(player(),format('#fff98b 在第'+tick_time()+'游戏刻,位于'+ pos +'的容器中的'+ item_display_name(item) +'数量不足'+ capacity + '！'));
         print(player(),format('w 容器进脏警报器（小于）已停止。'));
         return();
       )
     );
-    schedule(cycle, 'is_less', pos, item, capacity);
+    schedule(global_cycle, 'is_less', pos, item, capacity);
   );
 
 
@@ -204,27 +208,26 @@ cycle = 1;//默认的检测周期，所有模式的检测的周期共用一个�
   (
     if
     (
-      tick == cycle ,
+      tick == global_cycle ,
       (
-        print(player(),format('#FF0000 当前检测周期已为'+ cycle +'gt，请勿重复修改。' ));
+        print(player(),format('#FF0000 当前检测周期已设置为'+ global_cycle +'gt，请勿重复修改。' ));
         return();
       )
     );
-    cycle = tick;
-    print(player(),format('w 检测周期已修改为'+cycle +'gt。' ));
-    print(player(),format('w 当前检测周期为'+ cycle + 'gt。' ));
+    global_cycle = tick;
+    print(player(),format('w 检测周期已设置为'+global_cycle +'gt。' ));
   );
 
   //获取当前检测周期
-  get_cycle() ->(print(player(),format('w 当前检测周期为'+ cycle + 'gt。' )));
+  get_cycle() ->(print(player(),format('w 当前检测周期为'+ global_cycle + 'gt。' )));
 
-  //黑名单模式
+  //黑名单模式          
   blacklist(pos, item) ->
   (
     //先判断是否为容器
     if
     (
-      inventory_size(pos) = null,
+      inventory_size(pos) == null,
       (
         //建议搭配OMMC的解析坐标点来显示容器位置
         print(player(),format('#FF0000 位于'+ pos +'的方块不是容器，请重新输入坐标。'));
@@ -232,7 +235,7 @@ cycle = 1;//默认的检测周期，所有模式的检测的周期共用一个�
       )
     );
     //先提示玩家正在检测,表示所选位置为容器并且能够正常检测
-    print(player(),format('w 容器进脏警报器（黑名单）已于第'+ tick_time() + '游戏刻启动。'));
+    print(player(),format('#19c2fb 容器进脏警报器（黑名单）已于第'+ tick_time() + '游戏刻启动。'));
     print(player(),format('w 正在检测位于'+ pos +'的容器中是否进入了'+ item_display_name(item) + '。'));
     print(player(),format('w 请等待……'));
     is_blacklist(pos, item);//每tick检测容器是否有黑名单物品并打印
@@ -243,13 +246,13 @@ cycle = 1;//默认的检测周期，所有模式的检测的周期共用一个�
   (
     if
     (
-      inventory_size(pos) = null,
+      inventory_size(pos) == null,
       (
         print(player(),format('#FF0000 位于'+ pos +'的方块不是容器，请重新输入坐标。'));
         return();
       )
     );
-    print(player(),format('w 容器进脏警报器（白名单）已于第'+ tick_time() + '游戏刻启动。'));
+    print(player(),format('#19c2fb 容器进脏警报器（白名单）已于第'+ tick_time() + '游戏刻启动。'));
     print(player(),format('w 正在检测位于'+ pos +'的容器中是否进入了'+ item_display_name(item) + '以外的物品。'));
     print(player(),format('w 请等待……'));
     is_whitelist(pos, item);
@@ -269,16 +272,16 @@ cycle = 1;//默认的检测周期，所有模式的检测的周期共用一个�
     //输入的数字超出容器容量上限则报警并停止报警
     if
     (
-      capacity > inventory_size(pos)*stack_limit(item),
-      (
+      capacity > inventory_size(pos)*stack_limit(item:0),
+      ( 
         print(player(),format('#FF0000 ' + '输入的数字不得大于最大容量，请重新输入数量！'));
         print(player(),format('w 位置：'+ pos + '。'));
         print(player(),format('w 容器进脏警报器（等于）已停止。'));
         return();
       )
     );
-    print(player(),format('w 容器进脏警报器（等于）已于第'+ tick_time() + '游戏刻启动。'));
-    print(player(),format('w 正在检测位于'+ pos +'的容器中是否有'+ capacity +'个'+ item_display_name(item) +'。'));
+    print(player(),format('#19c2fb 容器进脏警报器（等于）已于第'+ tick_time() + '游戏刻启动。'));
+    print(player(),format('w 正在检测位于'+ pos + '的容器中的'+item_display_name(item) +'数量是否为'+ capacity +'。'));
     print(player(),format('w 请等待……'));
     is_equal(pos, item, capacity);
   );
@@ -286,10 +289,17 @@ cycle = 1;//默认的检测周期，所有模式的检测的周期共用一个�
   //数量检测模式（不等于）
   not_equal(pos,item,capacity) ->
   (
-
     if
     (
-      capacity > stack_limit(item)*inventory_size(pos),
+      inventory_size(pos) == null,
+      (
+        print(player(),format('#FF0000 位于'+ pos +'的方块不是容器，请重新输入坐标。'));
+        return();
+      )
+    );
+    if
+    (
+      capacity > stack_limit(item:0)*inventory_size(pos),
       (
         print(player(),format('#FF0000 输入的数字不得大于最大容量，请重新输入数量！'));
         print(player(),format('w 位置：'+ pos + '。'));
@@ -297,6 +307,9 @@ cycle = 1;//默认的检测周期，所有模式的检测的周期共用一个�
         return();
       )
     );
+    print(player(),format('#19c2fb 容器进脏警报器（不等于）已于第'+ tick_time() + '游戏刻启动。'));
+    print(player(),format('w 正在检测位于'+ pos +'的容器中是否不是'+ capacity +'个'+ item_display_name(item) +'。'));
+    print(player(),format('w 请等待……'));
     is_not_equal(pos,item,capacity);
   );
 
@@ -305,7 +318,15 @@ cycle = 1;//默认的检测周期，所有模式的检测的周期共用一个�
   (
     if
     (
-      capacity > stack_limit(item)*inventory_size(pos),
+      inventory_size(pos) == null,
+      (
+        print(player(),format('#FF0000 位于'+ pos +'的方块不是容器，请重新输入坐标。'));
+        return();
+      )
+    );
+    if
+    (
+      capacity >= stack_limit(item:0)*inventory_size(pos),
       (
         print(player(),format('#FF0000 输入的数字不得大于最大容量，请重新输入数量！'));
         print(player(),format('w 位置：'+ pos + '。'));
@@ -313,6 +334,9 @@ cycle = 1;//默认的检测周期，所有模式的检测的周期共用一个�
         return();
       )
     );
+    print(player(),format('#19c2fb 容器进脏警报器（大于）已于第'+ tick_time() + '游戏刻启动。'));
+    print(player(),format('w 正在检测位于'+ pos + '的容器中的'+item_display_name(item) +'数量是否大于'+ capacity +'个'+ item_display_name(item) +'。'));
+    print(player(),format('w 请等待……'));
     is_greater(pos,item,capacity);
   );
   
@@ -321,7 +345,22 @@ cycle = 1;//默认的检测周期，所有模式的检测的周期共用一个�
   (
     if
     (
-      capacity = 1,
+      inventory_size(pos) == null,
+      (
+        print(player(),format('#FF0000 位于'+ pos +'的方块不是容器，请重新输入坐标。'));
+        return();
+      )
+    );
+    if
+    (
+      capacity == 1,
       print(player(),format('#FF0000 想要检测容器内是否有该物品建议用黑名单模式！'))
     );
-  )
+    print(player(),format('#19c2fb 容器进脏警报器（小于）已于第'+ tick_time() + '游戏刻启动。'));
+    print(player(),format('w 正在检测位于'+ pos + '的容器中的'+item_display_name(item) +'数量是否小于'+ capacity +'个'+ item_display_name(item) +'。'));
+    print(player(),format('w 请等待……'));
+    is_less(pos,item,capacity);
+  );
+
+
+//容器：我不干净了😭😭😭
